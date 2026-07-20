@@ -1,0 +1,433 @@
+/* The room chrome. Plain CSS on purpose: this repo ships a pre-compiled
+   Tailwind stylesheet, so new utility classes would never be generated. */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+
+.room-root {
+  --void: #080d10;
+  --chalk: #ede9e0;
+  --amber: #f0b457;
+  --paper: #f2eee4;
+  --ink: #16232a;
+  --ink-soft: #5c6c74;
+  --display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --body: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--void);
+  color: var(--chalk);
+  font-family: var(--body);
+}
+
+.room-canvas {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (min-width: 981px) {
+  .room-canvas.is-shifted {
+    transform: translateX(-15%);
+  }
+}
+
+/* ---- floating labels in the scene ---- */
+.room-label-wrap {
+  pointer-events: none;
+}
+.room-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--chalk);
+  opacity: 0.38;
+  white-space: nowrap;
+  transition: opacity 0.3s ease, color 0.3s ease;
+  user-select: none;
+}
+.room-label.is-lit {
+  opacity: 1;
+  color: var(--amber);
+}
+
+/* ---- page chrome ---- */
+.room-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 28px 32px;
+  z-index: 3;
+  pointer-events: none;
+}
+.room-header h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(19px, 2vw, 27px);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0;
+}
+.room-header p {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 9px 0 0;
+}
+
+.room-cue {
+  position: absolute;
+  left: 32px;
+  bottom: 26px;
+  z-index: 3;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  margin: 0;
+}
+.room-cue.is-hidden {
+  opacity: 0;
+}
+
+.room-reset {
+  position: absolute;
+  right: 28px;
+  bottom: 26px;
+  z-index: 3;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--chalk);
+  background: none;
+  border: 1px solid rgba(237, 233, 224, 0.24);
+  border-radius: 999px;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, opacity 0.3s;
+}
+.room-reset:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.room-reset:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+/* Keyboard and small-screen route into the same six sections. */
+.room-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: none;
+  flex-wrap: wrap;
+  gap: 1px;
+  background: rgba(237, 233, 224, 0.14);
+  border-top: 1px solid rgba(237, 233, 224, 0.14);
+}
+.room-nav button {
+  flex: 1 1 33%;
+  background: var(--void);
+  color: var(--chalk);
+  border: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 13px 4px;
+  cursor: pointer;
+}
+.room-nav button.is-active {
+  color: var(--amber);
+}
+.room-nav button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: -3px;
+}
+
+/* ---- the drawer ---- */
+.room-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 9, 12, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 4;
+}
+.room-scrim.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.room-sheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(560px, 100%);
+  background: var(--paper);
+  color: var(--ink);
+  z-index: 5;
+  transform: translateX(100%);
+  transition: transform 0.46s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 72px;
+}
+.room-sheet.is-open {
+  transform: none;
+}
+.room-sheet::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 4px;
+  background: var(--amber);
+  z-index: 2;
+}
+.room-sheet-in {
+  padding: 40px 44px 0;
+}
+
+.room-close {
+  position: absolute;
+  top: 26px;
+  right: 30px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(22, 35, 42, 0.2);
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.room-close:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.room-close:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.room-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 10px;
+}
+.room-sheet h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 33px;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+  margin: 0 0 20px;
+}
+.room-lede {
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+
+.room-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 20px;
+  padding: 20px 0;
+  border-top: 1px solid rgba(22, 35, 42, 0.14);
+}
+.room-stat b {
+  display: block;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.room-stat span {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.room-entry {
+  padding: 22px 0;
+  border-top: 1px solid rgba(22, 35, 42, 0.14);
+}
+.room-entry h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.room-when {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin: 6px 0 12px;
+}
+.room-entry p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+.room-entry ul {
+  margin: 0;
+  padding-left: 17px;
+}
+.room-entry li {
+  margin: 6px 0;
+  line-height: 1.55;
+}
+
+.room-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.room-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  border: 1px solid rgba(22, 35, 42, 0.22);
+  border-radius: 2px;
+  padding: 4px 9px;
+}
+
+.room-reach {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(22, 35, 42, 0.14);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.room-reach small {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.room-reach:hover {
+  color: #b4562c;
+}
+.room-reach:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+/* ---- loading + no-WebGL ---- */
+.room-loading,
+.room-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--void);
+  z-index: 6;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--chalk);
+}
+.room-fallback {
+  position: static;
+  display: block;
+  min-height: 100vh;
+  overflow-y: auto;
+  padding: 48px 24px 80px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: var(--body);
+  font-size: 16px;
+}
+.room-fallback-in {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.room-fallback h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 26px;
+  margin: 40px 0 4px;
+}
+.room-fallback .room-entry,
+.room-fallback .room-reach,
+.room-fallback .room-stats {
+  border-color: rgba(237, 233, 224, 0.16);
+}
+.room-fallback .room-when,
+.room-fallback .room-stat span,
+.room-fallback .room-reach small {
+  color: #9aa8b0;
+}
+.room-fallback .room-chip {
+  border-color: rgba(237, 233, 224, 0.24);
+}
+.room-fallback .room-reach {
+  color: var(--chalk);
+}
+
+@media (max-width: 980px) {
+  .room-nav {
+    display: flex;
+  }
+  /* The nav below already names all six; floating labels only collide here. */
+  .room-label-wrap {
+    display: none;
+  }
+  .room-cue,
+  .room-reset {
+    display: none;
+  }
+  .room-canvas {
+    bottom: 82px;
+  }
+  .room-sheet-in {
+    padding: 34px 22px 0;
+  }
+  .room-sheet h2 {
+    font-size: 27px;
+  }
+  .room-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-canvas,
+  .room-sheet {
+    transition: none;
+  }
+}
