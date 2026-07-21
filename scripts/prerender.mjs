@@ -7,8 +7,9 @@
  * the CV into the HTML at build time, and emits one page per section so each
  * has its own URL, title and description.
  *
- * There is no hydration to worry about: src/main.tsx uses createRoot().render(),
- * which replaces the container's contents rather than adopting them.
+ * The markup goes into #seo-static rather than #root. React would otherwise
+ * have to tear it down on every load, which was visible as a flash of a
+ * different page before the room appeared.
  *
  * Runs after `vite build`; see the build script in package.json.
  */
@@ -44,8 +45,8 @@ const markup = renderToStaticMarkup(React.createElement(SeoDocument));
 
 /* 2. Splice into the built index.html, once per page. */
 const template = readFileSync(join(OUT, 'index.html'), 'utf8');
-if (!template.includes('<div id="root"></div>')) {
-  throw new Error('prerender: could not find an empty #root in build/index.html');
+if (!template.includes('<div id="seo-static"></div>')) {
+  throw new Error('prerender: could not find an empty #seo-static in build/index.html');
 }
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -68,9 +69,9 @@ for (const page of PAGES) {
   const url = SITE + (page.slug ? `/${page.slug}` : '');
   let html = must(
     template,
-    '<div id="root"></div>',
-    `<div id="root">${markup}</div>`,
-    'the #root placeholder',
+    '<div id="seo-static"></div>',
+    `<div id="seo-static">${markup}</div>`,
+    'the #seo-static placeholder',
   );
   html = must(html, /<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`, 'title');
   html = must(

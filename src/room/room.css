@@ -463,6 +463,48 @@
   outline-offset: 3px;
 }
 
+/* ---- the wait before the room arrives ---- */
+.room-boot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: var(--void);
+}
+.room-boot-lamp {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(240, 180, 87, 0.9) 0%, rgba(240, 180, 87, 0) 68%);
+  animation: room-boot-glow 1.9s ease-in-out infinite;
+}
+.room-boot-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--chalk);
+  opacity: 0.45;
+}
+@keyframes room-boot-glow {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-boot-lamp { animation: none; opacity: 0.8; }
+}
+
+/* The canvas fades up rather than popping in over the loading state. */
+.room-canvas canvas {
+  animation: room-canvas-in 0.5s ease both;
+}
+@keyframes room-canvas-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* ---- loading + no-WebGL ---- */
 .room-loading,
 .room-fallback {
@@ -577,5 +619,188 @@
   }
   .room-label {
     transition: none;
+  }
+}
+
+/* ---- the brief dialog ------------------------------------------------
+   Sits over the room in the room's own materials, rather than throwing the
+   visitor onto a differently-designed page at the moment they decide to
+   get in touch. */
+.brief-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 9, 12, 0.62);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.45, 0, 0.55, 1);
+  z-index: 6;
+}
+.brief-scrim.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.brief {
+  position: fixed;
+  z-index: 7;
+  top: 50%;
+  left: 50%;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(88vh, 780px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 4px 0 var(--amber),
+    0 40px 90px rgba(0, 0, 0, 0.65);
+  transform: translate(-50%, calc(-50% + 14px)) scale(0.97);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.34s cubic-bezier(0.45, 0, 0.55, 1),
+    transform 0.34s cubic-bezier(0.45, 0, 0.55, 1),
+    visibility 0.34s;
+}
+.brief.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+.brief-in {
+  padding: 38px 38px 30px;
+}
+.brief-close {
+  top: 20px;
+  right: 22px;
+}
+.brief h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 27px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 14px;
+  text-shadow:
+    1px 1px 0 rgba(176, 84, 31, 0.3),
+    2px 2px 0 rgba(176, 84, 31, 0.2),
+    3px 3px 0 rgba(176, 84, 31, 0.12),
+    4px 5px 10px rgba(22, 35, 42, 0.15);
+}
+.brief .room-lede {
+  font-size: 15px;
+  margin-bottom: 22px;
+}
+
+.brief-field {
+  display: block;
+  margin-bottom: 16px;
+}
+.brief-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.brief-input {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--ink);
+  background: rgba(22, 35, 42, 0.04);
+  border: 1px solid rgba(22, 35, 42, 0.16);
+  border-radius: 3px;
+  padding: 11px 13px;
+  transition: border-color 0.2s, background 0.2s;
+  resize: vertical;
+}
+.brief-input::placeholder {
+  color: rgba(22, 35, 42, 0.38);
+}
+.brief-input:focus {
+  outline: none;
+  border-color: var(--rust);
+  background: #fff;
+}
+.brief-input[aria-invalid='true'] {
+  border-color: #b0341f;
+  background: rgba(176, 52, 31, 0.05);
+}
+.brief-error {
+  display: block;
+  font-size: 13px;
+  color: #96331c;
+  margin-top: 6px;
+}
+.brief-error-submit {
+  margin: 4px 0 14px;
+}
+
+.brief-send {
+  width: 100%;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  background: var(--ink);
+  border: 0;
+  border-radius: 3px;
+  padding: 15px 20px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.brief-send:hover:not(:disabled) {
+  background: #b0541f;
+  transform: translateY(-1px);
+}
+.brief-send:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.brief-send:focus-visible,
+.brief-input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.brief-alt {
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 14px 0 0;
+}
+.brief-alt a,
+.brief-done a {
+  color: #b0541f;
+}
+.brief-done {
+  text-align: center;
+}
+.brief-done .room-lede {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 620px) {
+  .brief-in {
+    padding: 32px 22px 26px;
+  }
+  .brief h2 {
+    font-size: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brief {
+    transition: opacity 0.2s linear, visibility 0.2s linear;
+    transform: translate(-50%, -50%);
+  }
+  .brief.is-open {
+    transform: translate(-50%, -50%);
+  }
+  .brief-send:hover:not(:disabled) {
+    transform: none;
   }
 }

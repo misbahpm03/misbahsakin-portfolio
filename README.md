@@ -63,7 +63,15 @@ brief form.
 At build time `scripts/prerender.mjs` renders the readable version of the CV
 into the HTML and emits one page per section, each with its own title,
 description and canonical. Without it the site shipped `<div id="root"></div>`
-and a crawler saw nothing. `scripts/make-og.mjs` screenshots the room itself for
+and a crawler saw nothing.
+
+That markup lands in `#seo-static`, **not** in `#root`. Inside `#root`, React
+had to tear it down on every load and the teardown was visible as a flash of a
+different page; outside it, an inline style hides it the moment scripting is
+confirmed and `main.tsx` removes it on mount.
+
+`/message` and the "Send a brief" action open a dialog over the room rather
+than a separate page. The old `src/pages/ContactPage.tsx` is no longer routed. `scripts/make-og.mjs` screenshots the room itself for
 the share card, so it cannot drift away from what the room looks like.
 
 ## Verifying it

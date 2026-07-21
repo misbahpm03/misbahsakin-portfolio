@@ -28,6 +28,18 @@
       <meta property="og:image:alt" content="A dark room: desk, lamp, roadmap wall and pinboards, each labelled with a section of the CV." />
       <meta name="twitter:card" content="summary_large_image" />
 
+      <script>
+        // Runs before first paint: if scripting is on, the static copy is never
+        // shown, so there is no flash of it before the room arrives.
+        document.documentElement.className += ' js';
+      </script>
+      <style>
+        html.js #seo-static { display: none; }
+        /* the room's own background, painted immediately so a reload does not
+           start on white */
+        html { background: #080d10; }
+      </style>
+
       <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
@@ -62,6 +74,12 @@
     </head>
 
     <body>
+      <!-- The pre-rendered CV lands in #seo-static, deliberately NOT in #root.
+           Inside #root, React had to tear it down and rebuild on every load,
+           and that teardown was visible as a flash of a different page. Out
+           here it is inert: crawlers and link-preview scrapers read it, and
+           main.tsx removes it the moment the app mounts. -->
+      <div id="seo-static"></div>
       <div id="root"></div>
       <script type="module" src="/src/main.tsx"></script>
     </body>

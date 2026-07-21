@@ -8,7 +8,9 @@ export type Block =
   | { kind: 'stat'; value: string; label: string }
   | { kind: 'entry'; title: string; when?: string; body?: string; bullets?: string[]; tags?: string[] }
   | { kind: 'tags'; title: string; tags: string[] }
-  | { kind: 'link'; label: string; value: string; href: string };
+  | { kind: 'link'; label: string; value: string; href: string }
+  /** opens the brief dialog over the room, instead of leaving for a page */
+  | { kind: 'brief'; label: string; value: string };
 
 export type Section = {
   /** matches the mesh id in the scene */
@@ -464,7 +466,7 @@ export const SECTIONS: Record<SectionId, Section> = {
       { kind: 'link', label: 'Phone', value: PROFILE.phone, href: `tel:${PROFILE.phone.replace(/\s/g, '')}` },
       { kind: 'link', label: 'LinkedIn', value: 'linkedin.com/in/misbahsakin', href: PROFILE.linkedin },
       { kind: 'link', label: 'Resume', value: 'Download PDF', href: PROFILE.resume },
-      { kind: 'link', label: 'Message form', value: 'Send a brief', href: '/message' },
+      { kind: 'brief', label: 'Message form', value: 'Send a brief' },
     ],
   },
 };

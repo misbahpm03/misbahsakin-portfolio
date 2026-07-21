@@ -110,6 +110,51 @@ const attr = (html, re) => (html.match(re) || [])[1];
   await page.waitForTimeout(2500);
   ok('/message still serves the brief form', (await page.locator('input, textarea').count()) >= 3);
 
+  /* ---- reload must not flash a different page ---- */
+  await page.goto(`${BASE}/`, { waitUntil: 'commit' });
+  const frames = [];
+  for (let i = 0; i < 10; i++) {
+    await page.waitForTimeout(220);
+    frames.push(
+      await page.evaluate(() => {
+        const seo = document.getElementById('seo-static');
+        return {
+          seo: !!seo && seo.offsetHeight > 0,
+          flat: !!document.querySelector('.room-fallback'),
+          boot: !!document.querySelector('.room-boot'),
+          canvas: !!document.querySelector('canvas'),
+        };
+      }),
+    );
+  }
+  const sequence = frames.map((f) =>
+    f.canvas ? 'room' : f.boot ? 'boot' : f.flat ? 'flat' : f.seo ? 'seo' : 'blank',
+  );
+  ok('reload never flashes the flat CV page',
+     !sequence.includes('flat') && !sequence.includes('seo'), sequence.join('>'));
+  ok('reload ends in the room', sequence[sequence.length - 1] === 'room', sequence.join('>'));
+
+  /* ---- the brief is a dialog in the room, not the old page ---- */
+  await page.goto(`${BASE}/contact`, { waitUntil: 'load' });
+  await page.waitForTimeout(4500);
+  await page.locator('.room-reach', { hasText: 'Send a brief' }).click();
+  await page.waitForTimeout(900);
+  ok('Send a brief opens a dialog', (await page.locator('.brief.is-open').count()) === 1);
+  ok('the old contact page is gone', (await page.locator('text=Get In Touch').count()) === 0);
+  ok('the room is still behind it', (await page.locator('canvas').count()) === 1);
+
+  await page.locator('.brief-send').click();
+  await page.waitForTimeout(500);
+  ok('the brief validates before sending', (await page.locator('.brief-error').count()) >= 3);
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(700);
+  ok('Escape closes the brief', (await page.locator('.brief.is-open').count()) === 0);
+
+  await page.goto(`${BASE}/message`, { waitUntil: 'load' });
+  await page.waitForTimeout(4500);
+  ok('/message opens the brief over the room', (await page.locator('.brief.is-open').count()) === 1);
+
   ok('no page errors across the routes', errs.length === 0, errs.join(' | '));
   await browser.close();
 }

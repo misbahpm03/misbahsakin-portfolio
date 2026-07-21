@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Panel, Blocks } from './Panel';
+import { Brief } from './Brief';
 import { BY_SLUG, NAV_LABEL, PROFILE, SECTIONS, SECTION_ORDER, type SectionId } from './content';
 import './room.css';
 
@@ -58,6 +59,20 @@ export function SeoBody({ plain = false }: { plain?: boolean }) {
   );
 }
 
+/**
+ * What you see while the 3D chunk downloads. Deliberately the room's own
+ * background and header rather than the flat CV: showing a whole different
+ * page for a moment and then replacing it is what read as a glitch on reload.
+ */
+function RoomLoading() {
+  return (
+    <div className="room-boot" aria-live="polite">
+      <span className="room-boot-lamp" />
+      <span className="room-boot-text">Lighting the room</span>
+    </div>
+  );
+}
+
 /** Same content, no canvas: readable on anything, and what crawlers get. */
 export function FlatFallback({ plain = false }: { plain?: boolean }) {
   return (
@@ -75,9 +90,12 @@ export default function RoomPortfolio() {
   // browser Back button would drift out of step with the drawer.
   const { section: slug } = useParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const active: SectionId | null = (slug && BY_SLUG[slug]) || null;
 
   const [touched, setTouched] = React.useState(false);
+  // /message is a real URL that opens the dialog, so the form stays linkable.
+  const [briefOpen, setBriefOpen] = React.useState(pathname === '/message');
   const reducedMotion = usePrefersReducedMotion();
   const [webgl, setWebgl] = React.useState<boolean | null>(null);
   const lastTrigger = React.useRef<HTMLElement | null>(null);
@@ -89,6 +107,18 @@ export default function RoomPortfolio() {
   React.useEffect(() => {
     if (slug && !BY_SLUG[slug]) navigate('/', { replace: true });
   }, [slug, navigate]);
+
+  React.useEffect(() => {
+    if (pathname === '/message') setBriefOpen(true);
+  }, [pathname]);
+
+  const closeBrief = React.useCallback(() => {
+    setBriefOpen(false);
+    // Arriving straight at /message leaves nowhere to go back to, so put the
+    // visitor in the contact drawer rather than on a URL still naming a form
+    // that is no longer open.
+    if (pathname === '/message') navigate('/contact', { replace: true });
+  }, [pathname, navigate]);
 
   // Each section is its own page as far as a browser tab or a shared link is
   // concerned, so the title has to follow.
@@ -147,21 +177,15 @@ export default function RoomPortfolio() {
     return () => document.removeEventListener('keydown', onKey);
   }, [active, open]);
 
-  // Before the probe resolves, and forever if it says no: same readable page.
+  // null = still probing, so hold the room's background rather than swapping
+  // in a different-looking page for a frame. false = no WebGL, show the CV.
+  if (webgl === null) return <div className="room-root"><RoomLoading /></div>;
   if (!webgl) return <FlatFallback />;
 
   return (
     <div className="room-root" ref={root} tabIndex={-1}>
       <div className="room-canvas">
-        {/* The CV itself, not a spinner: on a slow connection this is a page
-            worth reading rather than a message about waiting. */}
-        <React.Suspense
-          fallback={
-            <div className="room-fallback">
-              <SeoBody />
-            </div>
-          }
-        >
+        <React.Suspense fallback={<RoomLoading />}>
           <Room
             active={active}
             onOpen={open}
@@ -208,7 +232,13 @@ export default function RoomPortfolio() {
         onClick={close}
         aria-hidden="true"
       />
-      <Panel section={active ? SECTIONS[active] : null} open={shown} onClose={close} />
+      <Panel
+        section={active ? SECTIONS[active] : null}
+        open={shown}
+        onClose={close}
+        onBrief={() => setBriefOpen(true)}
+      />
+      <Brief open={briefOpen} onClose={closeBrief} />
     </div>
   );
 }

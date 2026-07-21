@@ -11,7 +11,16 @@ import type { Block, Section } from './content';
  * useLayoutEffect-on-the-server warning for markup that is never hydrated.
  * A full page load is the right behaviour there anyway.
  */
-export function Blocks({ blocks, plain = false }: { blocks: Block[]; plain?: boolean }) {
+export function Blocks({
+  blocks,
+  plain = false,
+  onBrief,
+}: {
+  blocks: Block[];
+  plain?: boolean;
+  /** absent in the pre-render and the no-JS fallback, where a link is right */
+  onBrief?: () => void;
+}) {
   const stats = blocks.filter((b): b is Extract<Block, { kind: 'stat' }> => b.kind === 'stat');
   const rest = blocks.filter((b) => b.kind !== 'stat');
 
@@ -31,6 +40,24 @@ export function Blocks({ blocks, plain = false }: { blocks: Block[]; plain?: boo
               </div>
             </div>
           );
+
+        if (b.kind === 'brief') {
+          // With no handler (pre-render, no-WebGL page) fall back to the route,
+          // so the form is still reachable without JavaScript.
+          if (!onBrief)
+            return (
+              <a className="room-reach" href="/message" key={i}>
+                {b.value}
+                <small>{b.label}</small>
+              </a>
+            );
+          return (
+            <button className="room-reach" onClick={onBrief} key={i}>
+              {b.value}
+              <small>{b.label}</small>
+            </button>
+          );
+        }
 
         if (b.kind === 'link') {
           const internal = b.href.startsWith('/');
@@ -96,10 +123,12 @@ export function Panel({
   section,
   open,
   onClose,
+  onBrief,
 }: {
   section: Section | null;
   open: boolean;
   onClose: () => void;
+  onBrief?: () => void;
 }) {
   const sheet = React.useRef<HTMLElement>(null);
   const closeBtn = React.useRef<HTMLButtonElement>(null);
@@ -162,7 +191,7 @@ export function Panel({
         <div className="room-sheet-in">
           <p className="room-eyebrow">{section.object}</p>
           <h2>{section.title}</h2>
-          <Blocks blocks={section.blocks} />
+          <Blocks blocks={section.blocks} onBrief={onBrief} />
         </div>
       )}
     </aside>
