@@ -8,7 +8,11 @@ createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<RoomPortfolio />} />
-      <Route path="/contact" element={<ContactPage />} />
+      {/* The brief form. It used to live at /contact, but that slug belongs to
+          the phone section now that every section has its own URL. */}
+      <Route path="/message" element={<ContactPage />} />
+      {/* Must come last: it would otherwise swallow /message. */}
+      <Route path="/:section" element={<RoomPortfolio />} />
     </Routes>
   </BrowserRouter>
 );

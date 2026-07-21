@@ -16,6 +16,10 @@ export type Section = {
   /** the object you clicked, named as an object */
   object: string;
   title: string;
+  /** this section's own URL, e.g. /projects */
+  slug: string;
+  /** one sentence; becomes the meta description for that URL */
+  blurb: string;
   blocks: Block[];
 };
 
@@ -46,6 +50,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'laptop',
     object: 'The laptop',
     title: 'Product manager, B2B and fintech',
+    slug: 'about',
+    blurb:
+      'Product manager for SaaS and fintech in Dhaka, with a QA background and two years owning delivery end to end.',
     blocks: [
       {
         kind: 'lede',
@@ -72,6 +79,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'whiteboard',
     object: 'The roadmap wall',
     title: 'Experience',
+    slug: 'experience',
+    blurb:
+      'Product roles at Riseup Labs and Sheba Platform, from trainee QA to B2B product manager, and what each one delivered.',
     blocks: [
       {
         kind: 'entry',
@@ -137,6 +147,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'corkboard',
     object: 'The wall of notes',
     title: 'Projects',
+    slug: 'projects',
+    blurb:
+      'Sheba Pay, Sheba Manager, Graphoskop, a microfinance loan engine, PMOps and Midnight Arcade — six shipped products and their numbers.',
     blocks: [
       {
         kind: 'entry',
@@ -201,6 +214,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'pegboard',
     object: 'The pegboard',
     title: 'Skills & tools',
+    slug: 'skills',
+    blurb:
+      'Product management, quality assurance, delivery tooling, data and AI tools used day to day.',
     blocks: [
       {
         kind: 'tags',
@@ -258,6 +274,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'shelf',
     object: 'The shelf',
     title: 'Awards & recognition',
+    slug: 'awards',
+    blurb:
+      'AI Excellence Award, 40% product adoption growth, a 60% cut in defect rate, and cross-functional teams of seven or more.',
     blocks: [
       {
         kind: 'lede',
@@ -298,6 +317,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'bookcase',
     object: 'The bookcase',
     title: 'Education & certifications',
+    slug: 'education',
+    blurb:
+      'B.Sc. in Electronics and Telecommunication Engineering from CUET, plus product, Scrum and Six Sigma certifications.',
     blocks: [
       {
         kind: 'entry',
@@ -343,6 +365,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'camera',
     object: 'The camera',
     title: 'Creative & film',
+    slug: 'creative',
+    blurb:
+      'Six years of design, motion graphics and film before product — including an ANIMATIBA Brazil best feature film award.',
     blocks: [
       {
         kind: 'lede',
@@ -389,6 +414,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'polaroids',
     object: 'The photo wall',
     title: 'Community & organising',
+    slug: 'community',
+    blurb:
+      'HULT Prize, IEEE, Banglalink campus ambassador and festival organising: 500+ people mentored across 15+ voluntary projects.',
     blocks: [
       {
         kind: 'lede',
@@ -424,6 +452,9 @@ export const SECTIONS: Record<SectionId, Section> = {
     id: 'phone',
     object: 'The phone',
     title: 'Start a conversation',
+    slug: 'contact',
+    blurb:
+      'Get in touch about product roles and delivery ownership — email, phone, LinkedIn and a short brief form.',
     blocks: [
       {
         kind: 'lede',
@@ -433,7 +464,7 @@ export const SECTIONS: Record<SectionId, Section> = {
       { kind: 'link', label: 'Phone', value: PROFILE.phone, href: `tel:${PROFILE.phone.replace(/\s/g, '')}` },
       { kind: 'link', label: 'LinkedIn', value: 'linkedin.com/in/misbahsakin', href: PROFILE.linkedin },
       { kind: 'link', label: 'Resume', value: 'Download PDF', href: PROFILE.resume },
-      { kind: 'link', label: 'Message form', value: 'Send a brief', href: '/contact' },
+      { kind: 'link', label: 'Message form', value: 'Send a brief', href: '/message' },
     ],
   },
 };
@@ -450,6 +481,11 @@ export const SECTION_ORDER: SectionId[] = [
   'polaroids',
   'phone',
 ];
+
+/** URL slug -> section id, for routing. */
+export const BY_SLUG: Record<string, SectionId> = Object.fromEntries(
+  SECTION_ORDER.map((id) => [SECTIONS[id].slug, id]),
+) as Record<string, SectionId>;
 
 export const NAV_LABEL: Record<SectionId, string> = {
   laptop: 'About',

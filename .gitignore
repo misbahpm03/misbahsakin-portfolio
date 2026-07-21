@@ -34,3 +34,6 @@ pnpm-debug.log*
 # Playwright test artifacts
 playwright-artifacts/
 test-results/
+
+# pre-render SSR scratch output
+.ssr-tmp/

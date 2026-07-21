@@ -2,8 +2,16 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import type { Block, Section } from './content';
 
-/** Renders one content block. Shared by the drawer and the no-WebGL fallback. */
-export function Blocks({ blocks }: { blocks: Block[] }) {
+/**
+ * Renders one content block. Shared by the drawer, the no-WebGL fallback and
+ * the build-time pre-render.
+ *
+ * `plain` swaps react-router <Link> for a bare <a>. The pre-render has no
+ * router, and giving it a MemoryRouter just to satisfy Link produced a
+ * useLayoutEffect-on-the-server warning for markup that is never hydrated.
+ * A full page load is the right behaviour there anyway.
+ */
+export function Blocks({ blocks, plain = false }: { blocks: Block[]; plain?: boolean }) {
   const stats = blocks.filter((b): b is Extract<Block, { kind: 'stat' }> => b.kind === 'stat');
   const rest = blocks.filter((b) => b.kind !== 'stat');
 
@@ -32,7 +40,7 @@ export function Blocks({ blocks }: { blocks: Block[] }) {
               <small>{b.label}</small>
             </>
           );
-          return internal ? (
+          return internal && !plain ? (
             <Link className="room-reach" to={b.href} key={i}>{inner}</Link>
           ) : (
             <a

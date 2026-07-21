@@ -1,0 +1,128 @@
+/**
+ * Puts real HTML in the build output.
+ *
+ * The app is a client-rendered SPA, so index.html shipped an empty
+ * <div id="root">. A crawler that does not run JavaScript — and every link
+ * preview scraper — saw nothing at all. This renders the readable version of
+ * the CV into the HTML at build time, and emits one page per section so each
+ * has its own URL, title and description.
+ *
+ * There is no hydration to worry about: src/main.tsx uses createRoot().render(),
+ * which replaces the container's contents rather than adopting them.
+ *
+ * Runs after `vite build`; see the build script in package.json.
+ */
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { renderToStaticMarkup } from 'react-dom/server';
+import React from 'react';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const OUT = join(root, 'build');
+const TMP = join(root, '.ssr-tmp');
+const SITE = process.env.SITE_URL || 'https://misbahsakin.vercel.app';
+
+/* 1. Build the SEO entry for Node. Vite handles the CSS imports that plain
+      node cannot parse. */
+execFileSync(
+  'npx',
+  ['vite', 'build', '--ssr', 'src/room/seo.tsx', '--outDir', '.ssr-tmp', '--logLevel', 'warn'],
+  { cwd: root, stdio: 'inherit' },
+);
+
+// Vite names the SSR entry .mjs when package.json has no "type": "module",
+// and .js when it does. Take whichever landed rather than guessing.
+const entry = ['seo.mjs', 'seo.js']
+  .map((f) => join(TMP, f))
+  .find((f) => existsSync(f));
+if (!entry) throw new Error('prerender: no SSR entry emitted in .ssr-tmp');
+
+const { SeoDocument, PAGES } = await import(pathToFileURL(entry).href);
+const markup = renderToStaticMarkup(React.createElement(SeoDocument));
+
+/* 2. Splice into the built index.html, once per page. */
+const template = readFileSync(join(OUT, 'index.html'), 'utf8');
+if (!template.includes('<div id="root"></div>')) {
+  throw new Error('prerender: could not find an empty #root in build/index.html');
+}
+
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+/**
+ * Replace and insist it landed. These patterns depend on how Vite formats the
+ * head; a silent no-op would ship every page with the home page's title and
+ * description, which is exactly the kind of failure nobody notices.
+ */
+function must(html, pattern, replacement, what) {
+  // Test for the pattern rather than comparing before/after: the home page's
+  // title and description are already the correct values in the template, so a
+  // successful replacement there is legitimately a no-op.
+  const found = typeof pattern === 'string' ? html.includes(pattern) : pattern.test(html);
+  if (!found) throw new Error(`prerender: nothing matched for ${what}`);
+  return html.replace(pattern, replacement);
+}
+
+for (const page of PAGES) {
+  const url = SITE + (page.slug ? `/${page.slug}` : '');
+  let html = must(
+    template,
+    '<div id="root"></div>',
+    `<div id="root">${markup}</div>`,
+    'the #root placeholder',
+  );
+  html = must(html, /<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`, 'title');
+  html = must(
+    html,
+    /(<meta\s+name="description"\s+content=")[^"]*(")/,
+    `$1${esc(page.description)}$2`,
+    'description',
+  );
+  html = must(
+    html,
+    /(<meta\s+property="og:title"\s+content=")[^"]*(")/,
+    `$1${esc(page.title)}$2`,
+    'og:title',
+  );
+  html = must(
+    html,
+    /(<meta\s+property="og:description"\s+content=")[^"]*(")/,
+    `$1${esc(page.description)}$2`,
+    'og:description',
+  );
+  html = must(
+    html,
+    /(<meta\s+property="og:url"\s+content=")[^"]*(")/,
+    `$1${esc(url)}$2`,
+    'og:url',
+  );
+  html = must(
+    html,
+    /(<link\s+rel="canonical"\s+href=")[^"]*(")/,
+    `$1${esc(url)}$2`,
+    'canonical',
+  );
+
+  const dir = page.slug ? join(OUT, page.slug) : OUT;
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), html);
+}
+
+/* 3. sitemap.xml, from the same list, so it cannot drift out of sync. */
+const urls = PAGES.map(
+  (p) => `  <url><loc>${SITE}${p.slug ? '/' + p.slug : ''}</loc></url>`,
+).join('\n');
+writeFileSync(
+  join(OUT, 'sitemap.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`,
+);
+
+rmSync(TMP, { recursive: true, force: true });
+console.log(
+  `prerendered ${PAGES.length} pages (${(markup.length / 1024).toFixed(0)} kB of markup each) + sitemap.xml`,
+);

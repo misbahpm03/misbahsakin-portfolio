@@ -53,6 +53,19 @@ npm run build    # production build → build/
 
 Note the build output directory is `build/`, not Vite's default `dist/`.
 
+## URLs
+
+Every section has its own address — `/projects`, `/creative`, `/education` — so
+a link can point straight at one part of the work. The URL is the source of
+truth for which drawer is open, so browser Back closes it. `/message` is the
+brief form.
+
+At build time `scripts/prerender.mjs` renders the readable version of the CV
+into the HTML and emits one page per section, each with its own title,
+description and canonical. Without it the site shipped `<div id="root"></div>`
+and a crawler saw nothing. `scripts/make-og.mjs` screenshots the room itself for
+the share card, so it cannot drift away from what the room looks like.
+
 ## Verifying it
 
 ```bash
@@ -66,6 +79,11 @@ camera flight, drawer contents for all nine sections, `Escape`, arrow-key
 navigation, the mobile drawer, reduced motion, the no-WebGL fallback, and the
 effects-disabled path. Writes screenshots to the path given.
 `scripts/room-shot.mjs` takes the screenshots alone, without asserting.
+
+```bash
+node scripts/reach-verify.mjs   # crawlable HTML, share card, per-section URLs
+node scripts/room-labels.mjs    # in-room label placement at three widths
+```
 
 ## How it holds up
 

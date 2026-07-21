@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://misbahsakin.vercel.app/sitemap.xml
