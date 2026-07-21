@@ -99,7 +99,10 @@ export function Panel({
   React.useEffect(() => {
     if (!open) return;
     sheet.current?.scrollTo(0, 0);
-    closeBtn.current?.focus();
+    // preventScroll matters: focusing an element inside a panel that is still
+    // translated off-screen makes the browser scroll it into view, which jolts
+    // mid-slide.
+    closeBtn.current?.focus({ preventScroll: true });
   }, [open, section?.id]);
 
   // Escape closes, and focus stays inside the drawer while it is open.

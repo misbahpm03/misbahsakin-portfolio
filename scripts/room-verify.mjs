@@ -142,10 +142,21 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
   await r.emulateMedia({ reducedMotion: 'reduce' });
   await r.goto(URL, { waitUntil: 'load' });
   await r.waitForTimeout(4000);
-  await r.mouse.click(500, 320);
-  await r.waitForTimeout(700); // far less than a camera flight
-  ok('reduced motion jumps straight to the section',
-     await r.locator('.room-sheet.is-open').count() === 1);
+  // Reduced motion should cut the camera flight but still show the drawer
+  // arriving. Killing its transition outright made it teleport, which is what
+  // "it jumps" turned out to be for anyone with the OS setting on.
+  const fade = await r.evaluate(async () => {
+    const sheet = document.querySelector('.room-sheet');
+    const seen = []; let go = true;
+    const tick = () => { if (!go) return; seen.push(getComputedStyle(sheet).opacity); requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    [...document.querySelectorAll('.room-nav button')].find((b) => b.innerText.trim() === 'Skills').click();
+    await new Promise((res) => setTimeout(res, 900));
+    go = false;
+    return new Set(seen).size;
+  });
+  ok('reduced motion opens the section', await r.locator('.room-sheet.is-open').count() === 1);
+  ok('reduced motion fades rather than teleporting', fade > 4, `${fade} distinct opacities`);
   await r.close();
 }
 

@@ -227,14 +227,10 @@
 .room-sheet.is-open {
   transform: none;
 }
-.room-sheet::before {
-  content: '';
-  position: sticky;
-  top: 0;
-  display: block;
-  height: 4px;
-  background: var(--amber);
-  z-index: 2;
+/* The amber cap. An inset shadow stays put while the panel scrolls without a
+   sticky child, which Chrome would re-solve on every frame of the slide. */
+.room-sheet {
+  box-shadow: inset 0 4px 0 var(--amber);
 }
 .room-sheet-in {
   padding: 40px 44px 0;
@@ -503,9 +499,29 @@
   }
 }
 
+/*
+ * Reduced motion means cut the vestibular motion — the camera flight across
+ * the room — not every trace of feedback. Killing the drawer's transition made
+ * it teleport, which is its own kind of jarring. Fade it instead.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .room-canvas,
+  .room-canvas {
+    transition: none;
+  }
   .room-sheet {
+    transform: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s linear, visibility 0.2s linear;
+  }
+  .room-sheet.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .room-scrim {
+    transition: opacity 0.2s linear;
+  }
+  .room-label {
     transition: none;
   }
 }
