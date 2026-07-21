@@ -37,6 +37,10 @@ const C = {
 /** Where the camera sits, and what it looks at, for every focusable object. */
 type Pose = { pos: [number, number, number]; target: [number, number, number] };
 
+/** Camera flight duration. The drawer and canvas shift use the same figure and
+ *  the same curve in room.css, so the three read as one gesture. */
+const FLIGHT_SECONDS = 0.75;
+
 const HOME: Pose = { pos: [0.55, 1.66, 4.75], target: [0.45, 1.44, -2.0] };
 /** Portrait screens get their own framing — see the note in Rig. */
 const HOME_PORTRAIT: Pose = { pos: [-0.15, 2.7, 4.5], target: [-0.15, 1.42, -2.1] };
@@ -810,6 +814,9 @@ function Rig({
   const { camera, size } = useThree();
   const wantPos = React.useRef(new THREE.Vector3(...HOME.pos));
   const wantTarget = React.useRef(new THREE.Vector3(...HOME.target));
+  const fromPos = React.useRef(new THREE.Vector3());
+  const fromTarget = React.useRef(new THREE.Vector3());
+  const elapsed = React.useRef(0);
   const flying = React.useRef(false);
   const aspect = size.width / size.height;
 
@@ -831,28 +838,45 @@ function Rig({
 
     wantPos.current.copy(pos);
     wantTarget.current.copy(target);
-    flying.current = true;
+
     if (instant) {
       camera.position.copy(wantPos.current);
       controls.current?.target.copy(wantTarget.current);
       controls.current?.update();
       flying.current = false;
+      return;
     }
+
+    // Snapshot where the flight starts, so it can be interpolated on a curve
+    // rather than chased. Starting from the live camera means a flight
+    // interrupted mid-way continues smoothly from wherever it had got to.
+    fromPos.current.copy(camera.position);
+    if (controls.current) fromTarget.current.copy(controls.current.target);
+    elapsed.current = 0;
+    flying.current = true;
+    // The user dragging mid-flight fights the tween; hand control back on land.
+    if (controls.current) controls.current.enabled = false;
   }, [focus, instant, camera, controls, aspect]);
 
   useFrame((_, dt) => {
     if (!flying.current || !controls.current) return;
-    // Frame-rate independent easing, so a 144Hz screen and a 30fps phone
-    // take the same wall-clock time to arrive.
-    const k = 1 - Math.pow(0.008, dt);
-    camera.position.lerp(wantPos.current, k);
-    controls.current.target.lerp(wantTarget.current, k);
+
+    elapsed.current += dt;
+    const u = Math.min(elapsed.current / FLIGHT_SECONDS, 1);
+    // Ease in AND out. A plain per-frame lerp is fastest on its very first
+    // frame and decays from there, which is exactly what reads as a jump: the
+    // camera leaves at full speed and then crawls in.
+    // Quadratic rather than cubic: cubic's first ~100ms is so close to
+    // stationary that the click feels ignored before anything moves.
+    const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+
+    camera.position.lerpVectors(fromPos.current, wantPos.current, e);
+    controls.current.target.lerpVectors(fromTarget.current, wantTarget.current, e);
     controls.current.update();
-    if (camera.position.distanceTo(wantPos.current) < 0.01) {
-      camera.position.copy(wantPos.current);
-      controls.current.target.copy(wantTarget.current);
-      controls.current.update();
+
+    if (u >= 1) {
       flying.current = false;
+      controls.current.enabled = true;
     }
   });
 
