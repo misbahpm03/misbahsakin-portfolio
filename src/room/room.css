@@ -63,12 +63,6 @@
 .room-canvas {
   position: absolute;
   inset: 0;
-  transition: transform 0.75s cubic-bezier(0.45, 0, 0.55, 1);
-}
-@media (min-width: 981px) {
-  .room-canvas.is-shifted {
-    transform: translateX(-15%);
-  }
 }
 
 /* ---- floating labels in the scene ---- */

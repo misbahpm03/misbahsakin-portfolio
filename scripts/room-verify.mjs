@@ -41,8 +41,39 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
      await page.locator('.room-label.is-away').count() === 9 &&
        !(await page.locator('.room-label').first().isVisible()),
      `away=${await page.locator('.room-label.is-away').count()}`);
-  ok('canvas shifts aside', await page.locator('.room-canvas.is-shifted').count() === 1);
   await page.screenshot({ path: `${OUT}-desktop-panel.png` });
+
+  // The reported bug: the drawer appeared to jump. It was the canvas sliding
+  // sideways at the same time as the camera flew. Guard both halves.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(1400);
+  const slide = await page.evaluate(async () => {
+    const sheet = document.querySelector('.room-sheet');
+    const canvas = document.querySelector('.room-canvas');
+    const mx = (el) => {
+      const t = getComputedStyle(el).transform;
+      const m = t && t.startsWith('matrix') ? t.match(/matrix\(([^)]+)\)/) : null;
+      return m ? Math.round(parseFloat(m[1].split(',')[4])) : 0;
+    };
+    const out = [];
+    let go = true;
+    const tick = () => { if (!go) return; out.push([mx(sheet), mx(canvas)]); requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    [...document.querySelectorAll('.room-nav button')].find((b) => b.innerText.trim() === 'Skills').click();
+    await new Promise((r) => setTimeout(r, 1400));
+    go = false;
+    return out;
+  });
+  const panel = slide.map((r) => r[0]);
+  const canvasX = slide.map((r) => r[1]);
+  const steps = new Set(panel).size;
+  const backward = panel.filter((v, i) => i && v > panel[i - 1] + 1).length;
+  ok('drawer slides instead of teleporting', steps > 12 && backward === 0,
+     `${steps} distinct positions, ${backward} backward`);
+  ok('room does not slide while the drawer opens', canvasX.every((v) => v === 0),
+     `canvas moved to ${[...new Set(canvasX)].join(',')}`);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(1000);
 
   await page.keyboard.press('Escape');
   await page.waitForTimeout(1200);

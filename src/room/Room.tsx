@@ -834,6 +834,21 @@ function Rig({
     if (focus) {
       const pull = THREE.MathUtils.clamp(1.5 / aspect, 1, 1.35);
       pos.sub(target).multiplyScalar(pull).add(target);
+
+      // The drawer covers the right of the screen, so the subject has to sit
+      // left of centre. This used to be a CSS translate on the whole canvas,
+      // which meant the room slid sideways *while* the camera flew — two
+      // separate motions on the same pixels, and the thing that read as a
+      // lurch mid-open. Moving the camera instead makes it one motion.
+      const vw = size.width;
+      const drawer = vw >= 981 ? Math.min(560, vw) : 0;
+      if (drawer > 0) {
+        const dist = pos.distanceTo(target);
+        const visibleWidth = 2 * dist * Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360) * aspect;
+        const dx = (visibleWidth * (drawer / vw)) / 2;
+        pos.x += dx;
+        target.x += dx;
+      }
     }
 
     wantPos.current.copy(pos);
@@ -856,7 +871,7 @@ function Rig({
     flying.current = true;
     // The user dragging mid-flight fights the tween; hand control back on land.
     if (controls.current) controls.current.enabled = false;
-  }, [focus, instant, camera, controls, aspect]);
+  }, [focus, instant, camera, controls, aspect, size.width]);
 
   useFrame((_, dt) => {
     if (!flying.current || !controls.current) return;

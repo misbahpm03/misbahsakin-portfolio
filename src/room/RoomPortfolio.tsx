@@ -117,7 +117,7 @@ export default function RoomPortfolio() {
 
   return (
     <div className="room-root" ref={root} tabIndex={-1}>
-      <div className={`room-canvas${shown ? ' is-shifted' : ''}`}>
+      <div className="room-canvas">
         <React.Suspense fallback={<div className="room-loading">Drawing the room…</div>}>
           <Room
             active={active}
