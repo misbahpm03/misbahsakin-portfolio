@@ -426,6 +426,9 @@
   margin-top: 14px;
 }
 .room-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--mono);
   font-size: 11px;
   line-height: 1.5;
@@ -433,6 +436,18 @@
   background: rgba(22, 35, 42, 0.055);
   border-radius: 3px;
   padding: 4px 9px;
+}
+/* a mark reads as a mark, so the label beside it can sit closer */
+.room-chip.has-logo {
+  padding-left: 7px;
+}
+.room-chip-logo {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  /* brand colours are built for white; on cream they need a touch of restraint
+     or seventeen of them shout over the text */
+  opacity: 0.88;
 }
 
 .room-reach {

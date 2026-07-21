@@ -1,6 +1,27 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import type { Block, Section } from './content';
+import { LOGOS } from './logos';
+
+/**
+ * A tool chip. Brands with a mark get it; skills and the brands that asked to
+ * be removed from simple-icons stay text-only, which is why the row is a mix.
+ */
+function Chip({ label, plain = false }: { label: string; plain?: boolean }) {
+  // The marks are aria-hidden, so they say nothing to a crawler while roughly
+  // doubling the size of every pre-rendered page. Text-only on that path.
+  const logo = plain ? undefined : LOGOS[label];
+  return (
+    <span className={`room-chip${logo ? ' has-logo' : ''}`}>
+      {logo && (
+        <svg className="room-chip-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d={logo.path} fill={`#${logo.hex}`} />
+        </svg>
+      )}
+      {label}
+    </span>
+  );
+}
 
 /**
  * Renders one content block. Shared by the drawer, the no-WebGL fallback and
@@ -35,7 +56,7 @@ export function Blocks({
               <h3>{b.title}</h3>
               <div className="room-chips">
                 {b.tags.map((t) => (
-                  <span className="room-chip" key={t}>{t}</span>
+                  <Chip label={t} plain={plain} key={t} />
                 ))}
               </div>
             </div>
@@ -97,7 +118,7 @@ export function Blocks({
             {b.tags && (
               <div className="room-chips">
                 {b.tags.map((t) => (
-                  <span className="room-chip" key={t}>{t}</span>
+                  <Chip label={t} plain={plain} key={t} />
                 ))}
               </div>
             )}

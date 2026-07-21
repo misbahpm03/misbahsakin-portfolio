@@ -122,6 +122,20 @@ CSS here is plain, not Tailwind: this project ships a **pre-compiled** Tailwind
 stylesheet at `src/index.css` with no Tailwind build step, so any new utility class
 would silently generate no styles.
 
+## Tool logos
+
+The chips in the Skills drawer carry brand marks, generated into
+`src/room/logos.ts` by `scripts/make-logos.mjs`. `simple-icons` is a
+devDependency only — importing it at runtime would pull a 3,450-icon index in
+for the seventeen marks actually used.
+
+Adobe, Microsoft, Slack and OpenAI are missing on purpose: all four had their
+marks removed from simple-icons at the trademark owner's request, so those
+tools keep a text-only chip rather than having a logo sourced from somewhere
+less scrupulous. Skills that are not products — Roadmapping, Sprint Planning —
+are text-only too. The marks are trademarks of their owners and appear only to
+identify the tools used.
+
 ## Type
 
 Unbounded (display), Manrope (body), DM Mono (labels and dates) — all self-hosted

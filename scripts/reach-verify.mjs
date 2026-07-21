@@ -30,6 +30,9 @@ const attr = (html, re) => (html.match(re) || [])[1];
     ok(`static HTML contains "${probe}"`, text.includes(probe));
   }
   ok('static HTML is substantial', text.length > 5000, `${text.length} chars`);
+  // the marks are aria-hidden decoration; they belong in the app, not in ten
+  // copies of the pre-rendered HTML
+  ok('static HTML carries no logo paths', !html.includes('room-chip-logo'));
 }
 
 /* ---- one page per section, each with its own title and description ---- */
@@ -154,6 +157,16 @@ const attr = (html, re) => (html.match(re) || [])[1];
   await page.goto(`${BASE}/message`, { waitUntil: 'load' });
   await page.waitForTimeout(4500);
   ok('/message opens the brief over the room', (await page.locator('.brief.is-open').count()) === 1);
+
+  /* ---- tool chips carry their brand mark ---- */
+  await page.goto(`${BASE}/skills`, { waitUntil: 'load' });
+  await page.waitForTimeout(4500);
+  const chips = await page.evaluate(() => ({
+    all: document.querySelectorAll('.room-chip').length,
+    logos: document.querySelectorAll('.room-chip.has-logo svg').length,
+  }));
+  ok('tool chips show logos', chips.logos >= 15, `${chips.logos} of ${chips.all}`);
+  ok('skills without a brand stay text-only', chips.all - chips.logos > 20, `${chips.all - chips.logos}`);
 
   ok('no page errors across the routes', errs.length === 0, errs.join(' | '));
   await browser.close();
