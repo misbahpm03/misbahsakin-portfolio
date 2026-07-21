@@ -993,22 +993,22 @@ export function Room({
       <Hotspot id="pegboard" labelAt={[2.85, 0.42, -2.9]} active={active} onOpen={onOpen}>
         {objects.pegboard}
       </Hotspot>
-      <Hotspot id="shelf" labelAt={[-3.5, 0.92, -2.7]} active={active} onOpen={onOpen}>
+      <Hotspot id="shelf" labelAt={[-3.5, 1.06, -2.7]} active={active} onOpen={onOpen}>
         {objects.shelf}
       </Hotspot>
       <Hotspot id="bookcase" labelAt={[4.3, 2.24, -2.7]} active={active} onOpen={onOpen}>
         {objects.bookcase}
       </Hotspot>
-      <Hotspot id="camera" labelAt={[-2.95, 0.05, -1.4]} active={active} onOpen={onOpen}>
+      <Hotspot id="camera" labelAt={[-3.3, 0.06, -1.9]} active={active} onOpen={onOpen}>
         {objects.camera}
       </Hotspot>
       <Hotspot id="polaroids" labelAt={[1.05, 1.5, -2.9]} active={active} onOpen={onOpen}>
         {objects.polaroids}
       </Hotspot>
-      <Hotspot id="laptop" labelAt={[-0.45, 0.46, 0.35]} active={active} onOpen={onOpen}>
+      <Hotspot id="laptop" labelAt={[-0.92, 0.99, -0.92]} active={active} onOpen={onOpen}>
         {objects.laptop}
       </Hotspot>
-      <Hotspot id="phone" labelAt={[0.98, 0.4, 0.85]} active={active} onOpen={onOpen}>
+      <Hotspot id="phone" labelAt={[0.92, 1.02, -0.7]} active={active} onOpen={onOpen}>
         {objects.phone}
       </Hotspot>
 
