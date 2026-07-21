@@ -71,29 +71,50 @@
 }
 /* The display face, so an object's name in the room and its title in the
    drawer are recognisably the same thing. Unbounded is wide, so this runs
-   smaller and tighter than the mono it replaced or the long labels collide. */
+   smaller and tighter than the mono it replaced or the long labels collide.
+   Amber at rest: it is the room's accent, already used for the line under the
+   name, and it lifts off the dark far better than dimmed chalk did. */
 .room-label {
   font-family: var(--display);
   font-weight: 800;
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--chalk);
-  opacity: 0.42;
+  color: var(--amber);
+  opacity: 0.92;
   white-space: nowrap;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
-  transition: opacity 0.3s ease, color 0.3s ease, visibility 0.3s;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.9),
+    0 2px 12px rgba(0, 0, 0, 0.95);
+  transition: opacity 0.25s ease, color 0.25s ease, transform 0.25s ease,
+    visibility 0.3s;
   user-select: none;
+
+  /* the wrapper turns pointer events off; the label itself takes them back */
+  pointer-events: auto;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  font-kerning: none;
 }
 .room-label.is-lit {
   opacity: 1;
-  color: var(--amber);
+  color: #FFF3DC;
+  transform: translateY(-1px);
+}
+.room-label:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 /* visibility, not just opacity: an opacity-0 label is still in the
    accessibility tree, and still announced. */
 .room-label.is-away {
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
 }
 
 /* ---- page chrome ---- */

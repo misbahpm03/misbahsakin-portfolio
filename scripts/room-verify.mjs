@@ -30,6 +30,23 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
      `got ${await page.locator('.room-label').count()}`);
   ok('drawer starts closed', !(await page.locator('.room-sheet.is-open').count()));
 
+  // The labels name the objects, so clicking the text must do what clicking
+  // the object does.
+  await page.locator('.room-label', { hasText: 'Projects' }).click();
+  await page.waitForTimeout(1600);
+  ok('clicking a label opens its section',
+     (await page.locator('.room-sheet h2').innerText()).trim() === 'Projects',
+     await page.locator('.room-sheet h2').innerText().catch(() => 'none'));
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(1200);
+
+  // and they are reachable without a mouse
+  const labelIsButton = await page.evaluate(() => {
+    const el = document.querySelector('.room-label');
+    return el.tagName === 'BUTTON' && el.tabIndex === 0;
+  });
+  ok('labels are focusable buttons', labelIsButton);
+
   // click the whiteboard through the canvas
   await page.mouse.click(560, 330);
   await page.waitForTimeout(2400);

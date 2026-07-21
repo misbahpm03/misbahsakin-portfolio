@@ -196,11 +196,26 @@ function Hotspot({
     >
       {children}
       {/* Kept mounted and hidden with CSS. Unmounting nine drei portals in the
-          same frame the drawer opens cost a ~65ms hitch — the visible glitch. */}
+          same frame the drawer opens cost a ~65ms hitch — the visible glitch.
+          The label is a real button: it names the object, so clicking it should
+          do what clicking the object does, and that also gives the room nine
+          keyboard-reachable entry points it did not have before. */}
       <Html position={labelAt} center zIndexRange={[20, 0]} wrapperClass="room-label-wrap">
-        <span className={`room-label${lit ? ' is-lit' : ''}${active ? ' is-away' : ''}`}>
+        <button
+          type="button"
+          className={`room-label${lit ? ' is-lit' : ''}${active ? ' is-away' : ''}`}
+          tabIndex={active ? -1 : 0}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(id);
+          }}
+          onPointerEnter={() => setHovered(true)}
+          onPointerLeave={() => setHovered(false)}
+          onFocus={() => setHovered(true)}
+          onBlur={() => setHovered(false)}
+        >
           {NAV_LABEL[id]}
-        </span>
+        </button>
       </Html>
     </group>
   );

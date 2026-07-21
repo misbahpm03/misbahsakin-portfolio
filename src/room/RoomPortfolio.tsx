@@ -136,7 +136,7 @@ export default function RoomPortfolio() {
       </header>
 
       <p className={`room-cue${touched ? ' is-hidden' : ''}`}>
-        Drag to look around · click an object
+        Drag to look around · click an object or its name
       </p>
 
       {active && (
