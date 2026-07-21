@@ -140,6 +140,93 @@ function Cylinder({
 }
 
 /* ------------------------------------------------------------------ *
+ * Surfaces and light shapes, painted to canvases
+ * ------------------------------------------------------------------ */
+
+/** A vertical alpha ramp. Light with a hard edge reads as a solid object. */
+function useRampTexture(stops: [number, string][]) {
+  const texture = React.useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const grad = ctx.createLinearGradient(0, 128, 0, 0);
+    for (const [at, colour] of stops) grad.addColorStop(at, colour);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 4, 128);
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, [stops]);
+  React.useEffect(() => () => texture?.dispose(), [texture]);
+  return texture;
+}
+
+/** A radial pool, for where light lands. */
+function usePoolTexture(colour: string) {
+  const texture = React.useMemo(() => {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    grad.addColorStop(0, colour);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, [colour]);
+  React.useEffect(() => () => texture?.dispose(), [texture]);
+  return texture;
+}
+
+/** Floorboards, drawn the way the rest of the room is: lines, not photographs. */
+function useFloorTexture() {
+  const texture = React.useMemo(() => {
+    const w = 96;
+    const h = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = C.floor;
+    ctx.fillRect(0, 0, w, h);
+    // the seam between planks, and one butt joint per board
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(1, 0);
+    ctx.lineTo(1, h);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.moveTo(0, 1);
+    ctx.lineTo(w, 1);
+    ctx.stroke();
+    // a faint highlight so a board has a top and a bottom
+    ctx.strokeStyle = 'rgba(237,233,224,0.075)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(3, 0);
+    ctx.lineTo(3, h);
+    ctx.stroke();
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(26, 5);
+    t.anisotropy = 8;
+    return t;
+  }, []);
+  React.useEffect(() => () => texture?.dispose(), [texture]);
+  return texture;
+}
+
+/* ------------------------------------------------------------------ *
  * Hotspot — anything clickable in the room
  * ------------------------------------------------------------------ */
 
@@ -229,12 +316,13 @@ function Hotspot({
 const WALL_Z = -3;
 
 function Shell() {
+  const boards = useFloorTexture();
   return (
     <group>
       {/* floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[14, 10]} />
-        <meshStandardMaterial color={C.floor} roughness={1} />
+        <meshStandardMaterial color={C.floor} roughness={1} map={boards ?? undefined} />
       </mesh>
       {/* back wall */}
       <mesh position={[0, 2, WALL_Z - 0.05]} receiveShadow>
@@ -251,12 +339,38 @@ function Shell() {
         <planeGeometry args={[10, 6]} />
         <meshStandardMaterial color={C.wall} roughness={1} />
       </mesh>
-      {/* skirting, drawn as a line the way the rest of the room is */}
+      {/*
+        Ceiling. Front face points down, so it closes the box from inside and is
+        simply culled from above — which matters, because at maxDistance and
+        minPolarAngle the camera sits well above y=3.2, and a double-sided
+        ceiling would hide the entire room from there.
+      */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3.2, -0.4]}>
+        <planeGeometry args={[14, 10]} />
+        <meshStandardMaterial color="#0A1116" roughness={1} />
+      </mesh>
+
+      {/* skirting on all three walls, not just the back, so the floor meets
+          something everywhere it is visible */}
       <Box position={[0, 0.06, WALL_Z]} size={[10.4, 0.12, 0.06]} color={C.wall} />
-      {/* rug */}
+      <Box position={[-5.16, 0.06, -0.4]} size={[0.06, 0.12, 5.2]} color={C.wall} />
+      <Box position={[5.16, 0.06, -0.4]} size={[0.06, 0.12, 5.2]} color={C.wall} />
+      {/* and a line where wall meets ceiling */}
+      <Box position={[0, 3.16, WALL_Z + 0.02]} size={[10.4, 0.05, 0.05]} color={C.wall} />
+
+      {/* rug: a border and a lighter field, so it reads as a thing on the floor
+          rather than a slightly different shade of dark */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.2, 0.012, 0.35]}>
         <circleGeometry args={[2.9, 44]} />
-        <meshStandardMaterial color="#2E211A" roughness={1} />
+        <meshStandardMaterial color="#332419" roughness={1} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.2, 0.014, 0.35]}>
+        <ringGeometry args={[2.62, 2.72, 44]} />
+        <meshStandardMaterial color="#4A3524" roughness={1} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.2, 0.014, 0.35]}>
+        <circleGeometry args={[2.3, 40]} />
+        <meshStandardMaterial color="#3A2A1D" roughness={1} />
       </mesh>
     </group>
   );
@@ -774,6 +888,7 @@ function Lamp({ coarse }: { coarse: boolean }) {
         <sphereGeometry args={[0.045, 12, 10]} />
         <meshStandardMaterial color="#FFF0CE" emissive="#FFD79A" emissiveIntensity={3.2} />
       </mesh>
+      <LampCone />
       <pointLight
         position={[0, 0.44, 0.06]}
         intensity={5.2}
@@ -863,6 +978,185 @@ function Phone() {
         <meshStandardMaterial color="#123A2C" emissive="#4FD199" emissiveIntensity={0.5} />
       </mesh>
     </group>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Atmosphere — the light made visible
+ *
+ * All of it is additive, depth-write off, and deliberately faint. Bloom is
+ * already running over the top, so anything bright enough to look right
+ * without it will blow out with it.
+ * ------------------------------------------------------------------ */
+
+/** The lamp's cone. What turns "a dark room" into "a room lit by one lamp". */
+function LampCone() {
+  const ramp = useRampTexture([
+    [0, 'rgba(0,0,0,0)'],
+    [0.55, 'rgba(120,120,120,1)'],
+    [1, 'rgba(255,255,255,1)'],
+  ]);
+  if (!ramp) return null;
+  return (
+    <mesh position={[0, 0.28, 0.02]} renderOrder={2}>
+      {/* open-ended and tapered: the shade's mouth down to a pool on the desk */}
+      <cylinderGeometry args={[0.19, 0.62, 0.56, 24, 1, true]} />
+      <meshBasicMaterial
+        color="#FFC978"
+        transparent
+        opacity={0.075}
+        alphaMap={ramp}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        side={THREE.DoubleSide}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
+/** Where the lamp lands: the desk should look lit by it, not merely near it. */
+function DeskBounce() {
+  const pool = usePoolTexture('rgba(255,190,110,0.85)');
+  if (!pool) return null;
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[1.28, 0.796, -1.15]} renderOrder={1}>
+      <planeGeometry args={[2.1, 1.7]} />
+      <meshBasicMaterial
+        map={pool}
+        transparent
+        opacity={0.5}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
+/**
+ * The window's shaft, and the pool where it lands.
+ *
+ * Held as a screen-facing plane rather than a slab angled through the room:
+ * angled correctly in 3D it is seen edge-on from the home camera and all but
+ * disappears, which is the opposite of the point.
+ */
+function WindowShaft() {
+  const ramp = useRampTexture([
+    [0, 'rgba(0,0,0,0)'],
+    [0.35, 'rgba(90,90,90,1)'],
+    [1, 'rgba(255,255,255,1)'],
+  ]);
+  const pool = usePoolTexture('rgba(120,175,215,0.8)');
+  if (!ramp || !pool) return null;
+  return (
+    <group>
+      <mesh position={[-3.15, 1.3, -2.2]} rotation={[0, 0, -0.3]} renderOrder={2}>
+        <planeGeometry args={[1.7, 2.5]} />
+        <meshBasicMaterial
+          color="#79B0D2"
+          transparent
+          opacity={0.055}
+          alphaMap={ramp}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-2.75, 0.02, -1.6]} renderOrder={1}>
+        <planeGeometry args={[2.6, 2.2]} />
+        <meshBasicMaterial
+          map={pool}
+          transparent
+          opacity={0.3}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** Dust in the lamp beam. Nothing says "air" like something floating in it. */
+function Dust({ count, still }: { count: number; still: boolean }) {
+  const points = React.useRef<THREE.Points>(null);
+
+  const { geometry, seeds, base } = React.useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const seeds = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      // loosely inside the lamp's cone, a little wider so it does not look
+      // like the motes are trapped in a glass
+      const t = Math.random();
+      const radius = 0.18 + t * 0.75;
+      const angle = Math.random() * Math.PI * 2;
+      positions[i * 3] = 1.3 + Math.cos(angle) * radius * Math.random();
+      positions[i * 3 + 1] = 0.82 + (1 - t) * 0.62;
+      positions[i * 3 + 2] = -1.25 + Math.sin(angle) * radius * Math.random();
+      seeds[i] = Math.random() * Math.PI * 2;
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    // keep the starting points: the drift is an offset from them, not an
+    // accumulation, so motes wander around a home rather than away forever
+    return { geometry, seeds, base: positions.slice() };
+  }, [count]);
+
+  React.useEffect(() => () => geometry.dispose(), [geometry]);
+
+  useFrame((state) => {
+    if (still || !points.current) return;
+    const attr = points.current.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const array = attr.array as Float32Array;
+    const time = state.clock.elapsedTime;
+    for (let i = 0; i < count; i++) {
+      // Position derived from elapsed time, not nudged each frame: a per-frame
+      // delta runs at whatever speed the display happens to refresh at, and
+      // accumulates, so the motes slowly leave the room.
+      const seed = seeds[i];
+      array[i * 3] = base[i * 3] + Math.sin(time * 0.24 + seed) * 0.045;
+      array[i * 3 + 1] = base[i * 3 + 1] + Math.cos(time * 0.19 + seed * 1.7) * 0.055;
+      array[i * 3 + 2] = base[i * 3 + 2] + Math.sin(time * 0.16 + seed * 2.3) * 0.035;
+    }
+    attr.needsUpdate = true;
+  });
+
+  if (count === 0) return null;
+  return (
+    <points ref={points} geometry={geometry} renderOrder={3}>
+      <pointsMaterial
+        size={0.012}
+        sizeAttenuation
+        color="#FFD9A0"
+        transparent
+        opacity={0.55}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </points>
+  );
+}
+
+/**
+ * The whole atmosphere pack. The meshes are a handful of transparent quads and
+ * stay on everywhere; only the dust count scales, since that is the part with a
+ * per-frame cost.
+ */
+function Atmosphere({ coarse, still }: { coarse: boolean; still: boolean }) {
+  const gpu = useDetectGPU();
+  const forced =
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('fx') : null;
+  const tier = forced === '1' ? 3 : forced === '0' ? 0 : gpu.tier ?? 0;
+  const count = coarse ? 0 : tier >= 3 ? 260 : tier >= 2 ? 140 : 0;
+  return (
+    <>
+      <DeskBounce />
+      <WindowShaft />
+      <Dust count={count} still={still} />
+    </>
   );
 }
 
@@ -1080,6 +1374,7 @@ export function Room({
         {objects.phone}
       </Hotspot>
 
+      <Atmosphere coarse={isCoarse} still={reducedMotion} />
       <Glow coarse={isCoarse} />
 
       <OrbitControls
@@ -1089,8 +1384,8 @@ export function Room({
         enableDamping
         dampingFactor={0.08}
         minDistance={1.4}
-        maxDistance={16}
-        minPolarAngle={Math.PI * 0.16}
+        maxDistance={9.5}
+        minPolarAngle={Math.PI * 0.27}
         maxPolarAngle={Math.PI * 0.52}
         minAzimuthAngle={-Math.PI * 0.42}
         maxAzimuthAngle={Math.PI * 0.42}

@@ -24,6 +24,23 @@ numbers; the polaroids are captioned. The window shows the Dhaka skyline at nigh
 and is deliberately not clickable: it places the room somewhere real without
 adding another thing to click.
 
+## Light
+
+The room is a night scene lit by one lamp, and now says so. The lampshade
+throws a visible cone with dust drifting in it, the window lays a cool shaft
+across the floorboards, and the desk carries a warm pool where the lamp lands.
+All of it is additive geometry with depth-write off and deliberately low
+opacity — bloom runs over the top, so anything bright enough to look right
+without it blows out with it.
+
+The shell closes the space: a ceiling (front face down, so it is culled from
+above and never occludes the camera), floorboards, skirting on all three walls
+and a rug that reads as an object. Without those the light had nothing to
+fall on.
+
+Dust count scales with GPU tier and is zero on touch devices; under
+`prefers-reduced-motion` the motes are present but still.
+
 ## No 3D assets
 
 Every object is assembled from three.js primitives — boxes, cylinders, planes —
