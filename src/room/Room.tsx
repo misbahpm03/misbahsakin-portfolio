@@ -999,16 +999,16 @@ export function Room({
       <Hotspot id="bookcase" labelAt={[4.3, 2.24, -2.7]} active={active} onOpen={onOpen}>
         {objects.bookcase}
       </Hotspot>
-      <Hotspot id="camera" labelAt={[-3.35, 0.08, -1.95]} active={active} onOpen={onOpen}>
+      <Hotspot id="camera" labelAt={[-2.95, 0.05, -1.4]} active={active} onOpen={onOpen}>
         {objects.camera}
       </Hotspot>
       <Hotspot id="polaroids" labelAt={[1.05, 1.5, -2.9]} active={active} onOpen={onOpen}>
         {objects.polaroids}
       </Hotspot>
-      <Hotspot id="laptop" labelAt={[-0.35, 0.62, -0.55]} active={active} onOpen={onOpen}>
+      <Hotspot id="laptop" labelAt={[-0.45, 0.46, 0.35]} active={active} onOpen={onOpen}>
         {objects.laptop}
       </Hotspot>
-      <Hotspot id="phone" labelAt={[0.95, 0.62, -0.3]} active={active} onOpen={onOpen}>
+      <Hotspot id="phone" labelAt={[0.98, 0.4, 0.85]} active={active} onOpen={onOpen}>
         {objects.phone}
       </Hotspot>
 

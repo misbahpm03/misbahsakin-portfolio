@@ -69,14 +69,19 @@
 .room-label-wrap {
   pointer-events: none;
 }
+/* The display face, so an object's name in the room and its title in the
+   drawer are recognisably the same thing. Unbounded is wide, so this runs
+   smaller and tighter than the mono it replaced or the long labels collide. */
 .room-label {
-  font-family: var(--mono);
-  font-size: 13px;
-  letter-spacing: 0.18em;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--chalk);
-  opacity: 0.38;
+  opacity: 0.42;
   white-space: nowrap;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
   transition: opacity 0.3s ease, color 0.3s ease, visibility 0.3s;
   user-select: none;
 }
