@@ -12,6 +12,7 @@ import {
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { NAV_LABEL, SECTION_ORDER, type SectionId } from './content';
+import { LOGOS } from './logos';
 
 /** troika (drei's Text) cannot read woff2 — this is the self-hosted TTF. */
 const FONT_MONO = '/fonts/dmmono-500.ttf';
@@ -427,23 +428,61 @@ function Corkboard() {
   );
 }
 
+/** The twelve the pegboard hangs, chosen for recognisability at this size. */
+const PEG_TOOLS = [
+  'JIRA', 'Figma', 'Notion', 'Miro', 'Confluence', 'Trello',
+  'ClickUp', 'GitHub', 'Postman', 'Claude', 'Cursor', 'Gemini',
+];
+
+/**
+ * Brand marks painted to small canvases, one per logo.
+ *
+ * simple-icons ships each mark as a single 24x24 path, which Path2D draws
+ * directly — no SVG parsing, no loader, no files to fetch. Marks that are
+ * black or near-black by brand (Notion, Cursor, GitHub) would vanish against a
+ * dark pegboard, so those are drawn in chalk instead: the room is unlit, and a
+ * logo nobody can see is not a logo.
+ */
+function useLogoTextures(names: string[]) {
+  const textures = React.useMemo(() => {
+    const size = 128;
+    return names
+      .map((name) => {
+        const logo = LOGOS[name];
+        if (!logo) return null;
+
+        const int = parseInt(logo.hex, 16);
+        const [r, g, b] = [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.scale(size / 24, size / 24);
+        ctx.fillStyle = luminance < 0.28 ? C.chalk : `#${logo.hex}`;
+        ctx.fill(new Path2D(logo.path));
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 4;
+        return { name, texture };
+      })
+      .filter(Boolean) as { name: string; texture: THREE.CanvasTexture }[];
+  }, [names]);
+
+  React.useEffect(() => () => textures.forEach((t) => t.texture.dispose()), [textures]);
+  return textures;
+}
+
 function Pegboard() {
   const holes = React.useMemo(() => {
     const out: [number, number][] = [];
     for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) out.push([-0.72 + c * 0.18, 0.28 - r * 0.19]);
     return out;
   }, []);
-  const tools: { x: number; y: number; w: number; h: number; c: string }[] = [
-    { x: -0.62, y: 0.16, w: 0.1, h: 0.42, c: '#9AA5AC' },
-    { x: -0.3, y: 0.2, w: 0.28, h: 0.09, c: '#9AA5AC' },
-    { x: -0.3, y: -0.02, w: 0.06, h: 0.34, c: '#5C4633' },
-    { x: 0.06, y: 0.1, w: 0.09, h: 0.5, c: '#9AA5AC' },
-    { x: 0.44, y: 0.16, w: 0.34, h: 0.08, c: '#9AA5AC' },
-    { x: 0.44, y: -0.12, w: 0.3, h: 0.24, c: '#6B7780' },
-    { x: 0.78, y: 0.06, w: 0.08, h: 0.44, c: '#5C4633' },
-    { x: -0.62, y: -0.2, w: 0.26, h: 0.1, c: '#6B7780' },
-    { x: 0.06, y: -0.18, w: 0.2, h: 0.2, c: '#9AA5AC' },
-  ];
+  const logos = useLogoTextures(PEG_TOOLS);
+
   return (
     <group position={[2.85, 1.02, WALL_Z + 0.04]} scale={0.9}>
       <Box size={[2.0, 1.0, 0.07]} color="#37444C" roughness={0.85} />
@@ -456,12 +495,26 @@ function Pegboard() {
           <meshStandardMaterial color="#0D1418" />
         </mesh>
       ))}
-      {tools.map((t, i) => (
-        <mesh key={i} position={[t.x, t.y, 0.06]}>
-          <planeGeometry args={[t.w, t.h]} />
-          <meshStandardMaterial color={t.c} emissive={t.c} emissiveIntensity={0.28} roughness={0.6} metalness={0.25} />
-        </mesh>
-      ))}
+      {logos.map(({ name, texture }, i) => {
+        const col = i % 6;
+        const row = Math.floor(i / 6);
+        return (
+          <group key={name} position={[-0.75 + col * 0.3, 0.06 - row * 0.34, 0.055]}>
+            {/* a peg to hang it from, so the marks sit on the board rather
+                than floating in front of it */}
+            <mesh position={[0, 0.14, 0]}>
+              <circleGeometry args={[0.016, 10]} />
+              <meshStandardMaterial color="#8C949A" metalness={0.6} roughness={0.4} />
+            </mesh>
+            <mesh>
+              <planeGeometry args={[0.2, 0.2]} />
+              {/* unlit: a brand colour should be its brand colour, not whatever
+                  the lamp across the room makes of it */}
+              <meshBasicMaterial map={texture} transparent toneMapped={false} />
+            </mesh>
+          </group>
+        );
+      })}
     </group>
   );
 }

@@ -124,10 +124,17 @@ would silently generate no styles.
 
 ## Tool logos
 
-The chips in the Skills drawer carry brand marks, generated into
+The pegboard in the room hangs twelve of them on pegs, and the chips in the
+Skills drawer carry the rest. Both are generated into
 `src/room/logos.ts` by `scripts/make-logos.mjs`. `simple-icons` is a
 devDependency only — importing it at runtime would pull a 3,450-icon index in
 for the seventeen marks actually used.
+
+In the 3D scene each mark is painted to a small canvas with `Path2D` and used
+as a texture — simple-icons ships one 24×24 path per brand, so there is no SVG
+parsing, no loader and nothing to fetch. Brands that are black by definition
+(Notion, Cursor, GitHub) are drawn in chalk instead, since the room is unlit
+and a logo nobody can see is not a logo.
 
 Adobe, Microsoft, Slack and OpenAI are missing on purpose: all four had their
 marks removed from simple-icons at the trademark owner's request, so those

@@ -124,6 +124,15 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
      sections.length === 9 && sections.every(([, h2, n]) => h2 && n > 250),
      JSON.stringify(sections.map(([a, , n]) => `${a}:${n}`)));
 
+  // the pegboard hangs the actual marks, not grey tool silhouettes
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(1000);
+  const pegTextures = await page.evaluate(() => {
+    // CanvasTexture-backed planes are the logos; count the canvases we made
+    return document.querySelectorAll('canvas').length;
+  });
+  ok('the scene still renders one canvas', pegTextures === 1, `${pegTextures}`);
+
   ok('no console errors', errors.length === 0, errors.join(' | '));
   await page.close();
 }
