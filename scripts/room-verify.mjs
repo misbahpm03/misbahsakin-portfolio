@@ -37,7 +37,10 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
   ok('drawer shows the right section',
      (await page.locator('.room-sheet h2').innerText()).trim() === 'Experience',
      await page.locator('.room-sheet h2').innerText());
-  ok('labels hidden while focused', await page.locator('.room-label').count() === 0);
+  ok('labels hidden while focused',
+     await page.locator('.room-label.is-away').count() === 9 &&
+       !(await page.locator('.room-label').first().isVisible()),
+     `away=${await page.locator('.room-label.is-away').count()}`);
   ok('canvas shifts aside', await page.locator('.room-canvas.is-shifted').count() === 1);
   await page.screenshot({ path: `${OUT}-desktop-panel.png` });
 

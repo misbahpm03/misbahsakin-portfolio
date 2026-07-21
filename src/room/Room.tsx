@@ -191,11 +191,13 @@ function Hotspot({
       }}
     >
       {children}
-      {!active && (
-        <Html position={labelAt} center zIndexRange={[20, 0]} wrapperClass="room-label-wrap">
-          <span className={`room-label${lit ? ' is-lit' : ''}`}>{NAV_LABEL[id]}</span>
-        </Html>
-      )}
+      {/* Kept mounted and hidden with CSS. Unmounting nine drei portals in the
+          same frame the drawer opens cost a ~65ms hitch — the visible glitch. */}
+      <Html position={labelAt} center zIndexRange={[20, 0]} wrapperClass="room-label-wrap">
+        <span className={`room-label${lit ? ' is-lit' : ''}${active ? ' is-away' : ''}`}>
+          {NAV_LABEL[id]}
+        </span>
+      </Html>
     </group>
   );
 }
@@ -876,6 +878,40 @@ export function Room({
   const isCoarse =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
+  // Opening a drawer changes `active`, which re-renders this component. Holding
+  // the geometry in stable elements lets React bail out of all nine object
+  // subtrees instead of reconciling every box in the room on the same frame the
+  // panel is trying to animate.
+  const objects = React.useMemo(
+    () => ({
+      whiteboard: <Whiteboard />,
+      corkboard: <Corkboard />,
+      pegboard: <Pegboard />,
+      shelf: <Shelf />,
+      bookcase: <Bookcase />,
+      camera: <CameraTable />,
+      polaroids: <Polaroids />,
+      laptop: <Laptop />,
+      phone: <Phone />,
+    }),
+    [],
+  );
+  const scenery = React.useMemo(
+    () => (
+      <>
+        <Shell />
+        <Window />
+        <Desk />
+        <Lamp coarse={isCoarse} />
+        <Plant />
+        <React.Suspense fallback={null}>
+          <FramedPhoto />
+        </React.Suspense>
+      </>
+    ),
+    [isCoarse],
+  );
+
   return (
     <Canvas
       dpr={isCoarse ? 1 : [1, 1.8]}
@@ -892,14 +928,7 @@ export function Room({
       <ambientLight intensity={0.52} color="#8FA6B4" />
       <directionalLight position={[-5, 3.4, 2.5]} intensity={0.62} color="#7FB6DA" />
 
-      <Shell />
-      <Window />
-      <Desk />
-      <Lamp coarse={isCoarse} />
-      <Plant />
-      <React.Suspense fallback={null}>
-        <FramedPhoto />
-      </React.Suspense>
+      {scenery}
 
       {/* Grounds the furniture. Without it everything hovers a millimetre
           off the floor, which is the tell that a room is not a room. */}
@@ -917,31 +946,31 @@ export function Room({
       )}
 
       <Hotspot id="whiteboard" labelAt={[-1.0, 2.95, -2.9]} active={active} onOpen={onOpen}>
-        <Whiteboard />
+        {objects.whiteboard}
       </Hotspot>
       <Hotspot id="corkboard" labelAt={[2.85, 2.98, -2.9]} active={active} onOpen={onOpen}>
-        <Corkboard />
+        {objects.corkboard}
       </Hotspot>
       <Hotspot id="pegboard" labelAt={[2.85, 0.42, -2.9]} active={active} onOpen={onOpen}>
-        <Pegboard />
+        {objects.pegboard}
       </Hotspot>
       <Hotspot id="shelf" labelAt={[-3.5, 0.92, -2.7]} active={active} onOpen={onOpen}>
-        <Shelf />
+        {objects.shelf}
       </Hotspot>
       <Hotspot id="bookcase" labelAt={[4.3, 2.24, -2.7]} active={active} onOpen={onOpen}>
-        <Bookcase />
+        {objects.bookcase}
       </Hotspot>
       <Hotspot id="camera" labelAt={[-3.35, 0.08, -1.95]} active={active} onOpen={onOpen}>
-        <CameraTable />
+        {objects.camera}
       </Hotspot>
       <Hotspot id="polaroids" labelAt={[1.05, 1.5, -2.9]} active={active} onOpen={onOpen}>
-        <Polaroids />
+        {objects.polaroids}
       </Hotspot>
       <Hotspot id="laptop" labelAt={[-0.35, 0.62, -0.55]} active={active} onOpen={onOpen}>
-        <Laptop />
+        {objects.laptop}
       </Hotspot>
       <Hotspot id="phone" labelAt={[0.95, 0.62, -0.3]} active={active} onOpen={onOpen}>
-        <Phone />
+        {objects.phone}
       </Hotspot>
 
       <Glow coarse={isCoarse} />

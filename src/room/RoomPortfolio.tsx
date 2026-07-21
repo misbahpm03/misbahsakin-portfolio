@@ -66,10 +66,25 @@ export default function RoomPortfolio() {
 
   React.useEffect(() => setWebgl(hasWebGL()), []);
 
+  // `active` decides what the drawer holds and where the camera flies; `shown`
+  // drives the slide. Splitting them lets the panel's DOM — up to 40 chips for
+  // Skills — be built in one frame and animated from the next, instead of the
+  // insert stalling the first frame of the transition.
+  const [shown, setShown] = React.useState(false);
+
   const open = React.useCallback((id: SectionId) => {
     setActive(id);
     setTouched(true);
   }, []);
+
+  React.useEffect(() => {
+    if (!active) {
+      setShown(false);
+      return;
+    }
+    const raf = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(raf);
+  }, [active]);
 
   const close = React.useCallback(() => {
     setActive(null);
@@ -102,7 +117,7 @@ export default function RoomPortfolio() {
 
   return (
     <div className="room-root" ref={root} tabIndex={-1}>
-      <div className={`room-canvas${active ? ' is-shifted' : ''}`}>
+      <div className={`room-canvas${shown ? ' is-shifted' : ''}`}>
         <React.Suspense fallback={<div className="room-loading">Drawing the room…</div>}>
           <Room
             active={active}
@@ -146,11 +161,11 @@ export default function RoomPortfolio() {
       </nav>
 
       <div
-        className={`room-scrim${active ? ' is-open' : ''}`}
+        className={`room-scrim${shown ? ' is-open' : ''}`}
         onClick={close}
         aria-hidden="true"
       />
-      <Panel section={active ? SECTIONS[active] : null} open={!!active} onClose={close} />
+      <Panel section={active ? SECTIONS[active] : null} open={shown} onClose={close} />
     </div>
   );
 }
