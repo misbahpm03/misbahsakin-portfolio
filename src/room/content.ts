@@ -19,7 +19,16 @@ export type Section = {
   blocks: Block[];
 };
 
-export type SectionId = 'laptop' | 'whiteboard' | 'corkboard' | 'pegboard' | 'shelf' | 'phone';
+export type SectionId =
+  | 'laptop'
+  | 'whiteboard'
+  | 'corkboard'
+  | 'pegboard'
+  | 'shelf'
+  | 'bookcase'
+  | 'camera'
+  | 'polaroids'
+  | 'phone';
 
 export const PROFILE = {
   name: 'Md Misbahul Islam',
@@ -248,8 +257,12 @@ export const SECTIONS: Record<SectionId, Section> = {
   shelf: {
     id: 'shelf',
     object: 'The shelf',
-    title: 'Awards, study & service',
+    title: 'Awards & recognition',
     blocks: [
+      {
+        kind: 'lede',
+        text: 'What the work was measured by, rather than what it was called.',
+      },
       {
         kind: 'entry',
         title: 'AI Excellence Award',
@@ -258,10 +271,40 @@ export const SECTIONS: Record<SectionId, Section> = {
       },
       {
         kind: 'entry',
+        title: 'Product adoption up 40%',
+        when: 'Sheba Platform',
+        body: 'Led the strategy behind a sustained lift in daily and monthly active users.',
+      },
+      {
+        kind: 'entry',
+        title: 'Defect rate down 60%',
+        when: 'Quality assurance',
+        body: 'Testing practice that cut defects while shortening the cycle — QA rounds went from two weeks to five days.',
+      },
+      {
+        kind: 'entry',
+        title: 'Team leadership',
+        when: 'Across multiple projects',
+        body: 'Ran cross-functional teams of 7+ — mobile, backend, and UI/UX — without losing a delivery date.',
+      },
+      { kind: 'stat', value: '40%', label: 'user growth' },
+      { kind: 'stat', value: '60%', label: 'fewer defects' },
+      { kind: 'stat', value: '75%', label: 'less QA cycle time' },
+      { kind: 'stat', value: '7+', label: 'people led at once' },
+    ],
+  },
+
+  bookcase: {
+    id: 'bookcase',
+    object: 'The bookcase',
+    title: 'Education & certifications',
+    blocks: [
+      {
+        kind: 'entry',
         title: 'B.Sc. Electronics & Telecommunication Engineering',
         when: 'Chittagong University of Engineering & Technology · 2019 — 2024',
-        body: 'Majored in Telecommunication, thesis on Antenna Design.',
-        tags: ['Telecommunication', 'Networking', 'GPA 3.19 / 4.0'],
+        body: 'Majored in Telecommunication. Thesis on antenna design — the engineering background is why conversations with engineers tend to go quickly.',
+        tags: ['Telecommunication', 'Networking', 'Software Development', 'GPA 3.19 / 4.0'],
       },
       {
         kind: 'entry',
@@ -271,25 +314,109 @@ export const SECTIONS: Record<SectionId, Section> = {
       },
       {
         kind: 'entry',
-        title: 'Certifications',
+        title: 'Secondary School Certificate',
+        when: 'Police Lines School and College, Rangpur · 2016',
+        tags: ['Science', 'Club & ECA', 'GPA 5.00 / 5.00'],
+      },
+      {
+        kind: 'entry',
+        title: 'Product & process',
         bullets: [
-          'Professional Diploma in Digital Products Management — MTF Institute, 2025',
+          'Professional Diploma in Digital Products Management — MTF Institute of Management, Technology & Finance, 2025',
           'Product Owner Certification — Agile Enterprise Coach London, 2025',
-          'Lean Six Sigma Yellow Belt (Accredited) — OPEXLEADER, 2025',
-          'Power BI Essential Training — Career Club, 2024',
-          'SDLC and STLC — QA Academy, 2023',
+          'Lean Six Sigma Yellow Belt, accredited — OPEXLEADER, 2025',
         ],
       },
       {
         kind: 'entry',
-        title: 'Beyond work',
-        body: 'Ten years of design, film and campus organising before product.',
+        title: 'Technical',
         bullets: [
-          'Campus Ambassador, Applink (Banglalink); IT Secretary, HULT Prize; Design Coordinator, IEEE Face the Case 2.0.',
-          'Chief Coordinator, Pitha Utshab 2022, Bangladesh Navy.',
-          'UNFPA "Save the Children" Award; Official Selection, International Children\'s Film Festival 2018-19.',
+          'Power BI Essential Training — Career Club, 2024',
+          'SDLC and STLC — QA Academy, 2023',
+          'Basic API Implementation — AppLink, 2022',
         ],
       },
+    ],
+  },
+
+  camera: {
+    id: 'camera',
+    object: 'The camera',
+    title: 'Creative & film',
+    blocks: [
+      {
+        kind: 'lede',
+        text: 'Six years of design and film before product management. It is why I can sit in a room with designers and be useful rather than decorative — and why an award-winning short film is on this CV next to a payment platform.',
+      },
+      {
+        kind: 'entry',
+        title: 'Motion Graphics and Video Editor',
+        when: 'aTech · Remote · 2022 — 2023',
+        bullets: [
+          'Edited promotional videos and documentaries for a range of clients.',
+          'Produced motion graphics and visual effects, running several projects at once against tight deadlines.',
+        ],
+        tags: ['Premiere Pro', 'After Effects', 'Color Grading', 'Motion Graphics'],
+      },
+      {
+        kind: 'entry',
+        title: 'Graphics Design & Video Editor',
+        when: '2016 — 2022',
+        bullets: [
+          'HTM Records, Bangladesh · 2019 — 2022',
+          'Graphics Design Director, CUET Model United Nations Club · 2021',
+        ],
+        tags: ['Photoshop', 'Illustrator', 'DaVinci Resolve', 'Final Cut'],
+      },
+      {
+        kind: 'entry',
+        title: 'Best Feature Film',
+        when: 'ANIMATIBA 2021 · Festival Internacional de Animação de Curitiba, Brazil',
+      },
+      {
+        kind: 'entry',
+        title: 'UNFPA "Save the Children" Award',
+      },
+      {
+        kind: 'entry',
+        title: 'Official Selection',
+        when: "International Children's Film Festival · 2018 — 2019",
+      },
+    ],
+  },
+
+  polaroids: {
+    id: 'polaroids',
+    object: 'The photo wall',
+    title: 'Community & organising',
+    blocks: [
+      {
+        kind: 'lede',
+        text: 'Running events is product management with a harder deadline and no way to ship a patch afterwards. Most of what I know about stakeholders, I learned here first.',
+      },
+      {
+        kind: 'entry',
+        title: 'Campus leadership',
+        when: '2021 — present',
+        bullets: [
+          'Campus Ambassador, Applink (Banglalink)',
+          'IT Secretary, HULT Prize Competition',
+          'Design Coordinator, IEEE Face the Case 2.0',
+          'Organizing Secretary, Joyoddhoney, CUET',
+        ],
+      },
+      {
+        kind: 'entry',
+        title: 'Events & coordination',
+        when: '2016 — 2022',
+        bullets: [
+          'Chief Coordinator, Pitha Utshab 2022, Bangladesh Navy',
+          'Coordinator, Alpona Utshab 1426, Rangpur · 2019',
+          'Project Coordinator, Project Notun Jama, Spriha (NGO), Rangpur · 2017 — 2019',
+        ],
+      },
+      { kind: 'stat', value: '500+', label: 'people mentored' },
+      { kind: 'stat', value: '15+', label: 'voluntary projects' },
     ],
   },
 
@@ -318,6 +445,9 @@ export const SECTION_ORDER: SectionId[] = [
   'corkboard',
   'pegboard',
   'shelf',
+  'bookcase',
+  'camera',
+  'polaroids',
   'phone',
 ];
 
@@ -327,5 +457,8 @@ export const NAV_LABEL: Record<SectionId, string> = {
   corkboard: 'Projects',
   pegboard: 'Skills',
   shelf: 'Awards',
+  bookcase: 'Education',
+  camera: 'Creative',
+  polaroids: 'Community',
   phone: 'Contact',
 };

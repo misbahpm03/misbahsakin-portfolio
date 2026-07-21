@@ -1,7 +1,43 @@
 /* The room chrome. Plain CSS on purpose: this repo ships a pre-compiled
    Tailwind stylesheet, so new utility classes would never be generated. */
 
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+/* Self-hosted, latin subset. No request to fonts.googleapis.com — that one
+   blocked first paint on a host we do not control. 88 kB for all five faces. */
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/unbounded-800.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/manrope-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/manrope-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/dmmono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/dmmono-500.woff2') format('woff2');
+}
 
 .room-root {
   --void: #080d10;
@@ -10,9 +46,9 @@
   --paper: #f2eee4;
   --ink: #16232a;
   --ink-soft: #5c6c74;
-  --display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
-  --body: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
-  --mono: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+  --display: 'Unbounded', ui-sans-serif, system-ui, sans-serif;
+  --body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, SFMono-Regular, monospace;
 
   position: fixed;
   inset: 0;
@@ -40,7 +76,7 @@
 .room-label {
   font-family: var(--mono);
   font-size: 13px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--chalk);
   opacity: 0.38;
@@ -65,9 +101,9 @@
 .room-header h1 {
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(19px, 2vw, 27px);
-  letter-spacing: -0.02em;
-  line-height: 1;
+  font-size: clamp(14px, 1.45vw, 19px);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
   margin: 0;
 }
 .room-header p {
@@ -240,9 +276,9 @@
 .room-sheet h2 {
   font-family: var(--display);
   font-weight: 800;
-  font-size: 33px;
-  letter-spacing: -0.025em;
-  line-height: 1.06;
+  font-size: 25px;
+  letter-spacing: -0.015em;
+  line-height: 1.22;
   margin: 0 0 20px;
 }
 .room-lede {
@@ -262,9 +298,9 @@
   display: block;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 30px;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-size: 23px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   margin-bottom: 6px;
 }
 .room-stat span {
@@ -278,10 +314,10 @@
   border-top: 1px solid rgba(22, 35, 42, 0.14);
 }
 .room-entry h3 {
-  font-family: var(--display);
+  font-family: var(--body);
   font-weight: 600;
   font-size: 18px;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   margin: 0;
 }
 .room-when {
@@ -325,9 +361,9 @@
   gap: 16px;
   padding: 16px 0;
   border-top: 1px solid rgba(22, 35, 42, 0.14);
-  font-family: var(--display);
+  font-family: var(--body);
   font-weight: 600;
-  font-size: 19px;
+  font-size: 18px;
   color: var(--ink);
   text-decoration: none;
 }
@@ -379,8 +415,9 @@
 .room-fallback h2 {
   font-family: var(--display);
   font-weight: 800;
-  font-size: 26px;
-  margin: 40px 0 4px;
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 44px 0 6px;
 }
 .room-fallback .room-entry,
 .room-fallback .room-reach,
@@ -411,14 +448,15 @@
   .room-reset {
     display: none;
   }
+  /* nine sections wrap to three rows, so the canvas has to clear all of it */
   .room-canvas {
-    bottom: 82px;
+    bottom: 124px;
   }
   .room-sheet-in {
     padding: 34px 22px 0;
   }
   .room-sheet h2 {
-    font-size: 27px;
+    font-size: 21px;
   }
   .room-stats {
     grid-template-columns: 1fr;

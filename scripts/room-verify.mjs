@@ -20,13 +20,13 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 
-  await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(3000);
+  await page.goto(URL, { waitUntil: 'load' });
+  await page.waitForTimeout(4500);
 
   const camAt = () => page.evaluate(() => window.__roomCam ?? null);
 
   ok('canvas mounted', await page.locator('canvas').count() === 1);
-  ok('six labels visible', await page.locator('.room-label').count() === 6,
+  ok('nine labels visible', await page.locator('.room-label').count() === 9,
      `got ${await page.locator('.room-label').count()}`);
   ok('drawer starts closed', !(await page.locator('.room-sheet.is-open').count()));
 
@@ -69,8 +69,8 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
     }
     return out;
   });
-  ok('all six sections have real content',
-     sections.length === 6 && sections.every(([, h2, n]) => h2 && n > 250),
+  ok('all nine sections have real content',
+     sections.length === 9 && sections.every(([, h2, n]) => h2 && n > 250),
      JSON.stringify(sections.map(([a, , n]) => `${a}:${n}`)));
 
   ok('no console errors', errors.length === 0, errors.join(' | '));
@@ -82,8 +82,8 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
   const m = await browser.newPage({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
   });
-  await m.goto(URL, { waitUntil: 'networkidle' });
-  await m.waitForTimeout(3000);
+  await m.goto(URL, { waitUntil: 'load' });
+  await m.waitForTimeout(4500);
   await m.screenshot({ path: `${OUT}-mobile-home.png` });
 
   ok('mobile nav is visible', await m.locator('.room-nav').isVisible());
@@ -106,8 +106,8 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
 {
   const r = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await r.emulateMedia({ reducedMotion: 'reduce' });
-  await r.goto(URL, { waitUntil: 'networkidle' });
-  await r.waitForTimeout(2600);
+  await r.goto(URL, { waitUntil: 'load' });
+  await r.waitForTimeout(4000);
   await r.mouse.click(500, 320);
   await r.waitForTimeout(700); // far less than a camera flight
   ok('reduced motion jumps straight to the section',
@@ -121,14 +121,27 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
   await n.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = function () { return null; };
   });
-  await n.goto(URL, { waitUntil: 'networkidle' });
-  await n.waitForTimeout(1500);
+  await n.goto(URL, { waitUntil: 'load' });
+  await n.waitForTimeout(2000);
   const text = await n.locator('.room-fallback').innerText().catch(() => '');
   ok('fallback renders without WebGL', text.length > 2000, `${text.length} chars`);
   ok('fallback still lists every section',
      ['Experience', 'Projects', 'Skills', 'Awards', 'conversation'].every((w) => text.includes(w)));
   await n.screenshot({ path: `${OUT}-fallback.png`, fullPage: false });
   await n.close();
+}
+
+/* ---- effects forced off: the low-GPU path must still render ---- */
+{
+  const lo = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const loErrors = [];
+  lo.on('pageerror', (e) => loErrors.push(e.message));
+  await lo.goto(URL + '?fx=0', { waitUntil: 'load' });
+  await lo.waitForTimeout(4000);
+  ok('renders with effects disabled', await lo.locator('canvas').count() === 1 && loErrors.length === 0,
+     loErrors.join(' | '));
+  await lo.screenshot({ path: `${OUT}-nofx.png` });
+  await lo.close();
 }
 
 await browser.close();
