@@ -23,7 +23,22 @@ import React from 'react';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(root, 'build');
 const TMP = join(root, '.ssr-tmp');
-const SITE = process.env.SITE_URL || 'https://misbahsakin.vercel.app';
+
+// The domain every canonical, sitemap entry, og:url and og:image is stamped
+// with. Order of preference:
+//   1. SITE_URL, for a custom domain you set yourself
+//   2. Vercel's own production URL, provided at build time — so a fresh deploy
+//      is correct with zero configuration, and stays correct if the project is
+//      renamed
+//   3. a sensible default for local builds
+// Everything in index.html is written against PLACEHOLDER and swapped to SITE
+// below, so there is one domain to change and it lives here.
+const PLACEHOLDER = 'https://misbahsakin.vercel.app';
+const SITE =
+  process.env.SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL &&
+    `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`) ||
+  'https://msportfolio-omega.vercel.app';
 
 /* 1. Build the SEO entry for Node. Vite handles the CSS imports that plain
       node cannot parse. */
@@ -104,6 +119,9 @@ for (const page of PAGES) {
     `$1${esc(url)}$2`,
     'canonical',
   );
+  // og:image and the JSON-LD carry the bare domain rather than a per-page path,
+  // so a plain swap finishes them off. No-op when SITE already is PLACEHOLDER.
+  html = html.split(PLACEHOLDER).join(SITE);
 
   const dir = page.slug ? join(OUT, page.slug) : OUT;
   mkdirSync(dir, { recursive: true });
@@ -123,7 +141,18 @@ ${urls}
 `,
 );
 
+/* 4. robots.txt, so its Sitemap: line names the same domain as everything
+      else rather than whatever was hardcoded in public/robots.txt. */
+writeFileSync(
+  join(OUT, 'robots.txt'),
+  `User-agent: *
+Allow: /
+
+Sitemap: ${SITE}/sitemap.xml
+`,
+);
+
 rmSync(TMP, { recursive: true, force: true });
 console.log(
-  `prerendered ${PAGES.length} pages (${(markup.length / 1024).toFixed(0)} kB of markup each) + sitemap.xml`,
+  `prerendered ${PAGES.length} pages (${(markup.length / 1024).toFixed(0)} kB of markup each) + sitemap.xml + robots.txt`,
 );
